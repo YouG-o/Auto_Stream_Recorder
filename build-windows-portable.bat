@@ -2,17 +2,23 @@
 
 REM Detect Maven command (mvnd or mvn)
 set MAVEN_CMD=
+set FOUND_MAVEN=false
 where mvnd >nul 2>nul
 if %ERRORLEVEL%==0 (
     set MAVEN_CMD=mvnd
+    set FOUND_MAVEN=true
+    echo [INFO] Using mvnd (Maven Daemon)
 ) else (
-    where mvn >nul 2>nul
-    if %ERRORLEVEL%==0 (
+    for /f "tokens=*" %%i in ('where mvn 2^>nul') do (
         set MAVEN_CMD=mvn
-    ) else (
-        echo [ERROR] Neither mvnd nor mvn found in PATH. Please install Maven.
-        exit /b 1
+        set FOUND_MAVEN=true
+        echo [INFO] Using mvn from: %%i
     )
+)
+
+if "%FOUND_MAVEN%"=="false" (
+    echo [ERROR] Neither mvnd nor mvn found in PATH. Please install Maven.
+    exit /b 1
 )
 
 REM Get version from pom.xml
@@ -70,4 +76,4 @@ REM Remove the target folder as it is no longer needed
 if exist target rmdir /S /Q target
 
 echo Build complete. You can now run %APP_NAME%.exe from the %APP_NAME% folder.
-pause
+if not "%CI_BUILD%"=="true" pause
